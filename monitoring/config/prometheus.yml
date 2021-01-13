@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+scrape_configs:
+  - job_name: node_exporter
+    scrape_interval: 5s
+    static_configs:
+      - targets:
+          - 192.168.88.254:9100
+        labels:
+          role: host-pc
+
+  - job_name: cadvisor
+    scrape_interval: 5s
+    static_configs:
+      - targets:
+          - 192.168.88.254:8080
+
+  - job_name: 'federate'
+    honor_labels: true
+    metrics_path: '/federate'
+    params:
+      'match[]':
+        - '{__name__=~".+"}'
+    static_configs:
+      - targets:
+          - 'prometheus.inside-cluster.k8s:80'

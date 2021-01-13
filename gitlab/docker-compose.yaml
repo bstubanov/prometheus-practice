@@ -1,0 +1,37 @@
+version: '3.2'
+
+services:
+
+  gitlab-runner:
+    build:
+      context: ./Runner
+    container_name: gitlab_runner
+    volumes:
+    - /opt/gitlab/runner:/etc/gitlab-runner
+    extra_hosts:
+      gitlab.private.ru: 192.168.88.254
+
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    container_name: gitlab
+    hostname: gitlab.private.ru
+    ports:
+    - "80:80"
+    - "443:443"
+    - "2222:22"
+    volumes:
+    - /opt/gitlab/config:/etc/gitlab
+    - /opt/gitlab/logs:/var/log/gitlab
+    - /opt/gitlab/data:/var/opt/gitlab
+    extra_hosts:
+      gitlab.private.ru: 192.168.88.254
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url = 'http:/gitlab.private.ru/'
+        gitlab_rails['initial_root_password'] = 'p4Ss!&W0RrRD'
+        letsencrypt['enable'] = false
+
+
+networks:
+  default:
+    name: gitlab

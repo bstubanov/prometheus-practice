@@ -1,0 +1,37 @@
+variables:
+    SSH: "ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_SERVER"
+    PROM_DIR: "/opt/prometheus"
+    TMP_DIR: "/tmp/prometheus"
+
+before_script:
+  - eval $(ssh-agent -s)
+  - echo "$SSH_LOCAL_KEY" | tr -d '\r' | ssh-add -
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+
+stages:
+  - test
+  - download
+  - replace
+  - apply
+
+lint:
+  stage: test
+  script:
+    - yamllint config/
+
+get_git:
+  stage: download
+  script:
+    - $SSH "rm -rf $TMP_DIR"
+    - $SSH "git clone $CI_PROJECT_URL $TMP_DIR"
+
+replace_configs:
+  stage: replace
+  script:
+    - $SSH "cp -f $TMP_DIR/config/prometheus.yml $PROM_DIR/prometheus.yml"
+
+compose_up:
+  stage: apply
+  script:
+    - $SSH "docker-compose -f $TMP_DIR/docker/docker-compose.yaml up -d"
